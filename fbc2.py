@@ -1,3 +1,5 @@
+#!/usr/bin/python
+
 import urllib2,urllib, cookielib
 from HTMLParser import HTMLParser
 from argparse import ArgumentParser
