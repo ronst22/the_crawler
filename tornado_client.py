@@ -1,5 +1,6 @@
 #!/usr/bin/python
-
+ # -*- coding: utf-8 -*-
+ 
 import httplib, urllib2, urllib, cookielib
 
 class Client():
@@ -11,6 +12,6 @@ class Client():
         params = urllib.urlencode({'text': text})
         headers = {"Content-type": "application/form-data", "Accept": "text/plain"}
         opener = urllib2.build_opener()
-        req = urllib2.Request("http://104.214.70.4", params, headers)
+        req = urllib2.Request("http://104.214.70.4", params)
         res = opener.open(req)
         return res.read() == "True"
