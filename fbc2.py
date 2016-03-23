@@ -99,7 +99,7 @@ class GetDataHTMLParser(HTMLParser):
 	pass
 
     def handle_data(self, data):
-	if not self.is_style and self.in_post:
+	if not self.is_style:
             self.post_data += data + " "
 
 
@@ -146,13 +146,6 @@ def main():
 
 	offensive_detector = Offensive.Offensive()
 
-	fb_db = shelve.open(DB_FILE)
-
-	if not fb_db.has_key("link_list"):
-		fb_db["link_list"] = []
-
-	current_link_list = fb_db["link_list"]
-
 	fb_crawler = FacebookCrawler()
 	fb_crawler.login(args.username, args.password)
 
@@ -160,6 +153,14 @@ def main():
 	mail_notifyer.create_mail_connection()
 
 	while True:
+
+                fb_db = shelve.open(DB_FILE)
+
+                if not fb_db.has_key("link_list"):
+                        fb_db["link_list"] = []
+
+                current_link_list = fb_db["link_list"]
+                
 		link_parser = FullStoryGetterHTMLParser()
 		link_parser.feed(fb_crawler.fetch("https://m.facebook.com/" + args.profile_link.split("/")[-1]))
 
@@ -173,8 +174,9 @@ def main():
 					current_link_list.append(post_link)
 					mail_notifyer.send_link("https://m.facebook.com/" + post_link)
 
-	fb_db["link_list"] = current_link_list
-	fb_db.close()
+                fb_db["link_list"] = current_link_list
+                fb_db.close()
+                
 	mail_notifyer.server.quit()
 
 if __name__ == "__main__":
