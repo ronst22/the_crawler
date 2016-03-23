@@ -12,6 +12,7 @@ SELF_MAIL_ADDRESS = "hacker4good1@gmail.com"
 SELF_MAIL_PASSWORD = "blashit123"
 
 DB_FILE = "fbc.db"
+LOG_FILE = "fbc.log"
 
 class FacebookCrawlerMailNotifier:
 	def __init__(self, other_mail):
@@ -148,12 +149,12 @@ def main():
 
 	fb_crawler = FacebookCrawler()
 	fb_crawler.login(args.username, args.password)
-
-	mail_notifyer = FacebookCrawlerMailNotifier(args.user_email)
-	mail_notifyer.create_mail_connection()
-
+        log_file = open(LOG_FILE,"w+")
+                        
 	while True:
-
+                mail_notifyer = FacebookCrawlerMailNotifier(args.user_email)
+                mail_notifyer.create_mail_connection()
+                
                 fb_db = shelve.open(DB_FILE)
 
                 if not fb_db.has_key("link_list"):
@@ -164,20 +165,25 @@ def main():
 		link_parser = FullStoryGetterHTMLParser()
 		link_parser.feed(fb_crawler.fetch("https://m.facebook.com/" + args.profile_link.split("/")[-1]))
 
-		for post_link in link_parser.post_links:
+                cutted_list = []
+                for link in link_parser.post_links:
+                        cutted_list.append(link.split("&refid")[0])
+
+                for post_link in cutted_list:
 			data_parser = GetDataHTMLParser()
 			data_parser.feed(fb_crawler.fetch("https://m.facebook.com/" + post_link))
-			print data_parser.post_data
 			if offensive_detector.is_offensive(data_parser.post_data):
-				print "Offensive"
 				if not post_link in current_link_list:
+                                        log_file.write(data_parser.post_data + "\n")
+                                        log_file.write("sending mail...\n")
+                                        log_file.flush()
 					current_link_list.append(post_link)
 					mail_notifyer.send_link("https://m.facebook.com/" + post_link)
 
                 fb_db["link_list"] = current_link_list
                 fb_db.close()
                 
-	mail_notifyer.server.quit()
+                mail_notifyer.server.quit()
 
 if __name__ == "__main__":
 	main()
