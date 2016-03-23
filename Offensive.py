@@ -15,4 +15,4 @@ class Offensive():
             print "Failed to read clasifier"
 
     def is_offensive(self, text):
-        return self.clasi.classify(featx(text.split())) != "pos"
+        return self.clasi.classify(featx(text.split())) == "neg"

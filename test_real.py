@@ -34,8 +34,13 @@ class TestRealClasifier(unittest.TestCase):
          for text classification, at least when using the the NaiveBayes algorithm."""))
 
     def test_clasi_neg_html(self):
-        self.assertTrue(offensive.is_offensive(""" Comments Edit  ·  Delete Eylon Shabtay     ‎ Yoav Danieli Ass fuck jew fucker 5 mins  ·  Friends of Friends More Like Comment Share Write a comment... Attach a Photo  ·  Mention Friends
-"""))
+        self.assertTrue(offensive.is_offensive(""" Comments Edit  ·  Delete Eylon Shabtay     ‎ Yoav Danieli Ass fuck jew fucker 5 mins  ·  Friends of Friends More Like Comment Share Write a comment... Attach a Photo  ·  Mention Friends"""))
+
+    def test_clasi_pos_html(self):
+        self.assertFalse(offensive.is_offensive("""Amit Beckenstein https:// youtu.be/ Hl9ynGuPVXg?t=4m 7s Yarden Solomon KFC Izegem - Eendracht Aalst 15-11-15 youtube.com November 17, 2015 at 8:03pm"""))
+
+    def test_clasi_pos_html2(self):
+        self.assertFalse(offensive.is_offensive("""View Edit History Amit Beckenstein הצליפה המדהימה הזו ב- Yoav  ב-GTA  See Translation Watch AmitB s Grand Theft Auto V video: הצליפה המדהימה הזו ביואב ב-GTA ;) - Plays.tv plays.tv January 22 at 12:31am  ·  Raptr  ·  Friends More"""))
 
 if __name__ == '__main__':
     unittest.main()
