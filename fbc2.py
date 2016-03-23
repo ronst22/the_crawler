@@ -1,14 +1,17 @@
 #!/usr/bin/python
 
-import urllib2,urllib, cookielib
+import time
+import urllib2,urllib, cookielib, shelve
 from HTMLParser import HTMLParser
 from argparse import ArgumentParser
 from smtplib import SMTP
 
-SELF_MAIL_SERVICE = "mail.gmx.com"
+SELF_MAIL_SERVICE = "smtp.gmail.com"
 SELF_MAIL_PORT = 25
-SELF_MAIL_ADDRESS = "israelisraeli@gmx.com"
-SELF_MAIL_PASSWORD = "159Es753!"
+SELF_MAIL_ADDRESS = "hacker4good1@gmail.com"
+SELF_MAIL_PASSWORD = "blashit123"
+
+DB_FILE = "fbc.db"
 
 class FacebookCrawlerMailNotifier:
 	def __init__(self, other_mail):
@@ -106,7 +109,6 @@ class FacebookCrawler:
             req = urllib2.Request('http://m.facebook.com/login.php?m=m&refsrc=m.facebook.com%2F', params, self.headers)
             res = self.opener.open(req)
             html = res.read()
-            #print res.getheader('location').split('/')[3]
 
         except urllib2.HTTPError, e:
             print e.msg
@@ -127,6 +129,13 @@ def main():
 	arg_parser.add_argument("user_email", metavar="user_email", type=str)
 	args = arg_parser.parse_args()
 
+	fb_db = shelve.open(DB_FILE)
+
+	if not fb_db.has_key("link_list"):
+		fb_db["link_list"] = []
+
+	current_link_list = fb_db["link_list"]
+
 	fb_crawler = FacebookCrawler()
 	fb_crawler.login(args.username, args.password)
 
@@ -140,8 +149,15 @@ def main():
 		data_parser = GetDataHTMLParser()
 		data_parser.feed(fb_crawler.fetch("https://m.facebook.com/" + post_link))
         	print data_parser.post_data
+		is_data_offensive = True
+		if is_data_offensive:
+			if not post_link in current_link_list:
+				current_link_list.append(post_link)
+				mail_notifyer.send_link("https://m.facebook.com/" + post_link)
 
-
+	fb_db["link_list"] = current_link_list
+	fb_db.close()
+	mail_notifyer.server.quit()
 
 if __name__ == "__main__":
 	main()
