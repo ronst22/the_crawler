@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 import time
-import urllib2,urllib, cookielib, shelve
+import urllib2,urllib, cookielib, shelve, Offensive
 from HTMLParser import HTMLParser
 from argparse import ArgumentParser
 from smtplib import SMTP
@@ -72,19 +72,34 @@ class GetDataHTMLParser(HTMLParser):
     def __init__(self):
         HTMLParser.__init__(self)
 	self.is_style = False
+	self.in_post = False
         self.post_data = ""
+	self.counter = 0
 
     def handle_starttag(self, tag, attrs):
+        if self.in_post:
+            self.counter += 1
+
+        if "div" in tag and True in ["u_0" in i[1] and "id" in i[0] for i in attrs]:
+            self.in_post = True
+
 	if "style" in tag:
 	    self.is_style = True
 	pass
 
     def handle_endtag(self, tag):
 	self.is_style = False
+
+        if self.counter == 0 and self.in_post:
+            self.in_post = False
+
+        if self.in_post:
+            self.counter -= 1
+
 	pass
 
     def handle_data(self, data):
-	if not self.is_style:
+	if not self.is_style and self.in_post:
             self.post_data += data + " "
 
 
@@ -129,6 +144,8 @@ def main():
 	arg_parser.add_argument("user_email", metavar="user_email", type=str)
 	args = arg_parser.parse_args()
 
+	offensive_detector = Offensive.Offensive()
+
 	fb_db = shelve.open(DB_FILE)
 
 	if not fb_db.has_key("link_list"):
@@ -139,21 +156,22 @@ def main():
 	fb_crawler = FacebookCrawler()
 	fb_crawler.login(args.username, args.password)
 
-	link_parser = FullStoryGetterHTMLParser()
-	link_parser.feed(fb_crawler.fetch("https://m.facebook.com/" + args.profile_link.split("/")[-1]))
-
 	mail_notifyer = FacebookCrawlerMailNotifier(args.user_email)
 	mail_notifyer.create_mail_connection()
 
-	for post_link in link_parser.post_links:
-		data_parser = GetDataHTMLParser()
-		data_parser.feed(fb_crawler.fetch("https://m.facebook.com/" + post_link))
-        	print data_parser.post_data
-		is_data_offensive = True
-		if is_data_offensive:
-			if not post_link in current_link_list:
-				current_link_list.append(post_link)
-				mail_notifyer.send_link("https://m.facebook.com/" + post_link)
+	while True:
+		link_parser = FullStoryGetterHTMLParser()
+		link_parser.feed(fb_crawler.fetch("https://m.facebook.com/" + args.profile_link.split("/")[-1]))
+
+		for post_link in link_parser.post_links:
+			data_parser = GetDataHTMLParser()
+			data_parser.feed(fb_crawler.fetch("https://m.facebook.com/" + post_link))
+			print data_parser.post_data
+			if offensive_detector.is_offensive(data_parser.post_data):
+				print "Offensive"
+				if not post_link in current_link_list:
+					current_link_list.append(post_link)
+					mail_notifyer.send_link("https://m.facebook.com/" + post_link)
 
 	fb_db["link_list"] = current_link_list
 	fb_db.close()
