@@ -1,7 +1,8 @@
 #!/usr/bin/python
 
 import time
-import urllib2,urllib, cookielib, shelve, Offensive
+import urllib2,urllib, cookielib, shelve
+from tornado_client import Client
 from HTMLParser import HTMLParser
 from argparse import ArgumentParser
 from smtplib import SMTP
@@ -145,7 +146,7 @@ def main():
 	arg_parser.add_argument("user_email", metavar="user_email", type=str)
 	args = arg_parser.parse_args()
 
-	offensive_detector = Offensive.Offensive()
+	offensive_detector = Client()
 
 	fb_crawler = FacebookCrawler()
 	fb_crawler.login(args.username, args.password)
